@@ -3,8 +3,10 @@ package com.maxx.kurs_proj;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
-import android.widget.ProgressBar;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,22 +18,49 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FavoritesActivity extends AppCompatActivity implements FavoritesRecycleViewAdapter.ItemClickListener {
 
     private FavoritesRecycleViewAdapter _favoritesRecycleViewAdapter;
     private MealDbClient _mealDbClient;
-    private ProgressBar _loadingSpinner;
+    private EditText _searchBar;
     RecyclerView _recyclerView;
+
+    List<Meal> _displayedMeals = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favorites);
 
         _mealDbClient = new MealDbClient(this);
-        _loadingSpinner = findViewById(R.id.loadingSpinnerFavorites);
 
         _recyclerView = findViewById(R.id.favoritesRecycler);
         _recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        _searchBar = findViewById(R.id.searchBar);
+        _searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                return;
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                OnSearchTextChanged();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                return;
+            }
+        });
+
+        _favoritesRecycleViewAdapter = new FavoritesRecycleViewAdapter(this, _displayedMeals);
+        _favoritesRecycleViewAdapter.setClickListener(this);
+        _recyclerView.setAdapter(_favoritesRecycleViewAdapter);
 
         ResetView();
     }
@@ -80,17 +109,23 @@ public class FavoritesActivity extends AppCompatActivity implements FavoritesRec
     }
 
     private void ResetView() {
-        _favoritesRecycleViewAdapter = new FavoritesRecycleViewAdapter(this, FavoritesContainer.GetInstance().GetAll());
-        _favoritesRecycleViewAdapter.setClickListener(this);
-        _recyclerView.setAdapter(_favoritesRecycleViewAdapter);
+        UpdateRecycleView(FavoritesContainer.GetInstance().GetAll());
+        _searchBar.setText("");
         
         _recyclerView.setVisibility(View.VISIBLE);
-        _loadingSpinner.setVisibility(View.GONE);
+        findViewById(R.id.scroll_layout).setVisibility(View.GONE);
+    }
+
+    private void UpdateRecycleView(List<Meal> mealsToDisplay) {
+        _displayedMeals.clear();
+        _displayedMeals.addAll(mealsToDisplay);
+        _favoritesRecycleViewAdapter.notifyDataSetChanged();
     }
 
     private void EnterLoadingMode() {
         _recyclerView.setVisibility(View.GONE);
-        _loadingSpinner.setVisibility(View.VISIBLE);
+        findViewById(R.id.scroll_layout).setVisibility(View.VISIBLE);
+        _searchBar.setVisibility(View.GONE);
     }
 
     @Override
@@ -101,7 +136,26 @@ public class FavoritesActivity extends AppCompatActivity implements FavoritesRec
     }
 
     private void ShowToastWithError(String error) {
-        Toast.makeText(FavoritesActivity.this, "Ошибка: " + error, (int)5).show();
+        Toast.makeText(FavoritesActivity.this, "Ошибка: " + error, (int)3).show();
+    }
+
+    private void OnSearchTextChanged() {
+        String searchText = _searchBar.getText().toString();
+
+        List<Meal> allMeals = FavoritesContainer.GetInstance().GetAll();
+
+        if (searchText.isEmpty()) {
+            UpdateRecycleView(allMeals);
+            return;
+        }
+
+        ArrayList<Meal> foundMeals = new ArrayList<>();
+        for(int i = 0; i < allMeals.size(); i++) {
+            if (allMeals.get(i).GetName().contains(searchText))
+                foundMeals.add(allMeals.get(i));
+        }
+
+        UpdateRecycleView(foundMeals);
     }
 }
 
