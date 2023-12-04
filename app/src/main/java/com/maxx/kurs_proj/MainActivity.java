@@ -31,9 +31,6 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         ImageLoader.getInstance().init(config);
 
-        FavoritesContainer.GetInstance();
-        FavoritesContainer.Init(this);
-
         _getRndButton = findViewById(R.id.getRandomRecipeBtn);
         _openFavoritesButton = findViewById(R.id.openFavoritesBtn);
         _loadingSpinner = findViewById(R.id.loadingSpinner);

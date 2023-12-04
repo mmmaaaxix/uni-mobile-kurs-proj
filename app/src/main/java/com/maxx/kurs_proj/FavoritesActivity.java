@@ -27,13 +27,15 @@ public class FavoritesActivity extends AppCompatActivity implements FavoritesRec
     private MealDbClient _mealDbClient;
     private EditText _searchBar;
     RecyclerView _recyclerView;
-
+    FavoritesContainer _favoritesContainer;
     List<Meal> _displayedMeals = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favorites);
+
+        _favoritesContainer = new FavoritesContainer(this);
 
         _mealDbClient = new MealDbClient(this);
 
@@ -109,11 +111,12 @@ public class FavoritesActivity extends AppCompatActivity implements FavoritesRec
     }
 
     private void ResetView() {
-        UpdateRecycleView(FavoritesContainer.GetInstance().GetAll());
+        UpdateRecycleView(_favoritesContainer.FindByName("", 100));
         _searchBar.setText("");
-        
+
         _recyclerView.setVisibility(View.VISIBLE);
         findViewById(R.id.scroll_layout).setVisibility(View.GONE);
+        _searchBar.setVisibility(View.VISIBLE);
     }
 
     private void UpdateRecycleView(List<Meal> mealsToDisplay) {
@@ -142,19 +145,7 @@ public class FavoritesActivity extends AppCompatActivity implements FavoritesRec
     private void OnSearchTextChanged() {
         String searchText = _searchBar.getText().toString();
 
-        List<Meal> allMeals = FavoritesContainer.GetInstance().GetAll();
-
-        if (searchText.isEmpty()) {
-            UpdateRecycleView(allMeals);
-            return;
-        }
-
-        ArrayList<Meal> foundMeals = new ArrayList<>();
-        for(int i = 0; i < allMeals.size(); i++) {
-            if (allMeals.get(i).GetName().contains(searchText))
-                foundMeals.add(allMeals.get(i));
-        }
-
+        List<Meal> foundMeals = _favoritesContainer.FindByName(searchText, 100);
         UpdateRecycleView(foundMeals);
     }
 }

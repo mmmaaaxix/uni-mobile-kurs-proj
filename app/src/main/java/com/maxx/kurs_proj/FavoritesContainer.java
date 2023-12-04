@@ -1,138 +1,105 @@
 package com.maxx.kurs_proj;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 
-import androidx.recyclerview.widget.RecyclerView;
-
-import java.io.*;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class FavoritesContainer {
-    private static FavoritesContainer _instance = null;
-    private static final String _favoritesFileName = "favorites.ser";
+public class FavoritesContainer extends SQLiteOpenHelper {
+    private static final String _tableName = "favorites";
 
-    public static FavoritesContainer GetInstance() {
-        if (_instance == null) {
-            _instance = new FavoritesContainer();
+    public FavoritesContainer(Context context) {
+        super(context, "KURS_PROJ", null, 1);
+    }
+
+    public List<Meal> FindByName(String name, Integer limit) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor c = db.rawQuery("select id, meal_name, instructions, img_url from " + _tableName + " where UPPER(meal_name) like '%"+ name.toUpperCase() + "%' limit ?", new String[]{String.valueOf(limit)});
+
+//        Cursor c = !name.isEmpty()
+//                ? db.rawQuery("select id, meal_name, instructions, img_url from " + _tableName + " where UPPER(meal_name) like '%?%' limit ?", new String[]{name.toUpperCase(), String.valueOf(limit)})
+//                : db.rawQuery("select id, meal_name, instructions, img_url from " + _tableName + " limit ?", new String[]{String.valueOf(limit)});
+
+        ArrayList<Meal> selectedMeals = new ArrayList<>(limit);
+        if (c.moveToFirst()){
+            do {
+                String idColumn = c.getString(0);
+                String nameColumn = c.getString(1);
+                String instrColumn = c.getString(2);
+                String urlColumn = c.getString(3);
+
+                selectedMeals.add(new Meal(Long.parseLong(idColumn), nameColumn, instrColumn, urlColumn));
+            } while(c.moveToNext());
         }
-        return _instance;
-    }
-    public static void Init(Context context) {
-        _instance._saveDir = context.getFilesDir();
-        _instance._favoritesFile = new File(_instance._saveDir, _favoritesFileName);
-        _instance.ReadCacheFromFile();
-    }
+        c.close();
+        db.close();
 
-    private Map<Long, Meal> _cacheMap = null;
-
-    private File _saveDir, _favoritesFile;
-    private FavoritesContainer() {}
-
-    public List<Meal> GetAll() {
-        return new ArrayList<Meal>(_cacheMap.values());
+        return selectedMeals;
     }
 
     public boolean AlreadyAdded(Meal meal) {
-        return _cacheMap.containsKey(meal.GetId());
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("select id from " + _tableName + " where id = ?", new String[] {String.valueOf(meal.GetId())});
+        boolean res = c.moveToFirst();
+        c.close();
+        db.close();
+        return res;
     }
 
-    // Транзакционное добавление в кеш и в файл
     public boolean TryAdd(Meal meal) {
         if (AlreadyAdded(meal)) {
             return false;
         }
 
-        _cacheMap.put(meal.GetId(), meal);
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues mealDbObj = MapMealToDbObj(meal);
+        long res = db.insert(_tableName, null, mealDbObj);
+        db.close();
 
-        if(!WriteCacheToFile()) {
-            _cacheMap.remove(meal.GetId());
-            return false;
-        }
-
-        return true;
+        return res != -1;
     }
 
-    // Транзакционное удаление из кеша и из файла
     public boolean TryRemove(Meal meal) {
         if (!AlreadyAdded(meal)) {
             return false;
         }
 
-        Meal removedMeal = _cacheMap.remove(meal.GetId());
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues mealDbObj = MapMealToDbObj(meal);
+        int res = db.delete(_tableName, "id = ?", new String[]{String.valueOf(meal.GetId())});
+        db.close();
 
-        if(!WriteCacheToFile()) {
-            _cacheMap.put(removedMeal.GetId(), removedMeal);
-            return false;
-        }
-
-        return true;
+        return res > 0;
     }
 
-    private boolean WriteCacheToFile() {
-        if (!_saveDir.exists()) {
-            return false;
-        }
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        String query = "CREATE TABLE " + _tableName
+                + " (id INTEGER PRIMARY KEY, "
+                + "meal_name TEXT,"
+                + "instructions TEXT,"
+                + "img_url TEXT)";
 
-        boolean success;
-        FileOutputStream fos = null;
-        ObjectOutputStream out = null;
-        try {
-            fos = new FileOutputStream(_favoritesFile);
-            out = new ObjectOutputStream(fos);
-            out.writeObject(_cacheMap);
-            success = true;
-        }  catch (Exception e) {
-            e.printStackTrace();
-            success = false;
-        } finally {
-            try {
-                if (fos != null)
-                    fos.flush();
-                fos.close();
-                if (out != null)
-                    out.flush();
-                out.close();
-            } catch (Exception e) {
-                success = false;
-            }
-        }
-
-        return success;
+        db.execSQL(query);
     }
 
-    private void ReadCacheFromFile() {
-        if (!_saveDir.exists()) {
-            return;
-        }
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + _tableName);
+        onCreate(db);
+    }
 
-        if (!_favoritesFile.exists()) {
-            _cacheMap = new HashMap<>();
-            return;
-        }
-
-        FileInputStream fis = null;
-        ObjectInputStream in = null;
-        try {
-            fis = new FileInputStream(_favoritesFile);
-            in = new ObjectInputStream(fis);
-            _cacheMap = (Map<Long, Meal> ) in.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }finally {
-            try {
-                if(fis != null) {
-                    fis.close();
-                }
-                if(in != null) {
-                    in.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    private ContentValues MapMealToDbObj(Meal meal) {
+        ContentValues values = new ContentValues();
+        values.put("id", meal.GetId());
+        values.put("meal_name", meal.GetName());
+        values.put("instructions", meal.GetInstructions());
+        values.put("img_url", meal.GetImgUrl());
+        return values;
     }
 }

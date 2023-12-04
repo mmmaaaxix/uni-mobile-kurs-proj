@@ -11,15 +11,17 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MealActivity extends AppCompatActivity {
     private Meal _meal;
-
     private TextView _mealNameView, _mealRecipeView;
     private ImageView _mealImg;
     private Button _favBtn;
+    private FavoritesContainer _favoritesContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_meal);
+
+        _favoritesContainer = new FavoritesContainer(this);
 
         _meal = (Meal) getIntent().getSerializableExtra("MEAL");
         _mealNameView = findViewById(R.id.mealNameView);
@@ -36,11 +38,11 @@ public class MealActivity extends AppCompatActivity {
     }
 
     private void UpdateFavoriteBtn() {
-        _favBtn.setText(FavoritesContainer.GetInstance().AlreadyAdded(_meal) ? "Урать из избранного" : "Добавить в избранное");
+        _favBtn.setText(_favoritesContainer.AlreadyAdded(_meal) ? "Урать из избранного" : "Добавить в избранное");
     }
 
     public void onAddRemoveFavBtnClick(View view) {
-        FavoritesContainer favorites = FavoritesContainer.GetInstance();
+        FavoritesContainer favorites = _favoritesContainer;
         if (favorites.AlreadyAdded(_meal)) {
             if (!favorites.TryRemove(_meal)) {
                 ShowToastWithError("Не удалось удалить из избранного");
