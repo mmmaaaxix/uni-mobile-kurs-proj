@@ -21,10 +21,6 @@ public class FavoritesContainer extends SQLiteOpenHelper {
 
         Cursor c = db.rawQuery("select id, meal_name, instructions, img_url from " + _tableName + " where UPPER(meal_name) like '%"+ name.toUpperCase() + "%' limit ?", new String[]{String.valueOf(limit)});
 
-//        Cursor c = !name.isEmpty()
-//                ? db.rawQuery("select id, meal_name, instructions, img_url from " + _tableName + " where UPPER(meal_name) like '%?%' limit ?", new String[]{name.toUpperCase(), String.valueOf(limit)})
-//                : db.rawQuery("select id, meal_name, instructions, img_url from " + _tableName + " limit ?", new String[]{String.valueOf(limit)});
-
         ArrayList<Meal> selectedMeals = new ArrayList<>(limit);
         if (c.moveToFirst()){
             do {

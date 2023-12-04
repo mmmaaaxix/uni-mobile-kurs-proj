@@ -7,7 +7,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -87,12 +86,12 @@ public class FavoritesActivity extends AppCompatActivity implements FavoritesRec
                                     }
                                     @Override
                                     public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-                                        ShowToastWithError(failReason.toString());
+                                        Utils.ShowErrorToast(FavoritesActivity.this, failReason.toString());
                                         ResetView();
                                     }
                                     @Override
                                     public void onLoadingCancelled(String imageUri, View view) {
-                                        ShowToastWithError("Загрузка изображения отменена");
+                                        Utils.ShowErrorToast(FavoritesActivity.this, "Загрузка изображения отменена");
                                         ResetView();
                                     }
                                 });
@@ -104,7 +103,7 @@ public class FavoritesActivity extends AppCompatActivity implements FavoritesRec
                     }
                 },
                 (Response.ErrorListener) error -> {
-                    ShowToastWithError(error.getMessage());
+                    Utils.ShowErrorToast(FavoritesActivity.this, error.getMessage());
                     ResetView();
                 }
         );
@@ -136,10 +135,6 @@ public class FavoritesActivity extends AppCompatActivity implements FavoritesRec
         super.onRestart();
 
         ResetView();
-    }
-
-    private void ShowToastWithError(String error) {
-        Toast.makeText(FavoritesActivity.this, "Ошибка: " + error, (int)3).show();
     }
 
     private void OnSearchTextChanged() {

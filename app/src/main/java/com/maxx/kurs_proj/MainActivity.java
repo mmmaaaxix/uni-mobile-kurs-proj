@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -63,12 +62,12 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 @Override
                                 public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-                                    ShowToastWithError(failReason.toString());
+                                    Utils.ShowErrorToast(MainActivity.this, failReason.toString());
                                     ResetView();
                                 }
                                 @Override
                                 public void onLoadingCancelled(String imageUri, View view) {
-                                    ShowToastWithError("Загрузка изображения отменена");
+                                    Utils.ShowErrorToast(MainActivity.this, "Загрузка изображения отменена");
                                     ResetView();
                                 }
                     });
@@ -80,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             },
             (Response.ErrorListener) error -> {
-                ShowToastWithError(error.getMessage());
+                Utils.ShowErrorToast(MainActivity.this, error.getMessage());
                 ResetView();
             }
         );
@@ -89,10 +88,6 @@ public class MainActivity extends AppCompatActivity {
     public void onOpenFavoritesClick(View view) {
         Intent intent = new Intent(MainActivity.this, FavoritesActivity.class);
         startActivity(intent);
-    }
-
-    private void ShowToastWithError(String error) {
-        Toast.makeText(MainActivity.this, "Ошибка: " + error, (int)5).show();
     }
 
     private void ResetView() {

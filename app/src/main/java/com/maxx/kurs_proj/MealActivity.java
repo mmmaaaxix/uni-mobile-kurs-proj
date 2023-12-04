@@ -5,7 +5,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -38,36 +37,28 @@ public class MealActivity extends AppCompatActivity {
     }
 
     private void UpdateFavoriteBtn() {
-        _favBtn.setText(_favoritesContainer.AlreadyAdded(_meal) ? "Урать из избранного" : "Добавить в избранное");
+        _favBtn.setText(_favoritesContainer.AlreadyAdded(_meal) ? "Убрать из избранного" : "Добавить в избранное");
     }
 
     public void onAddRemoveFavBtnClick(View view) {
         FavoritesContainer favorites = _favoritesContainer;
         if (favorites.AlreadyAdded(_meal)) {
             if (!favorites.TryRemove(_meal)) {
-                ShowToastWithError("Не удалось удалить из избранного");
+                Utils.ShowErrorToast(MealActivity.this, "Не удалось удалить из избранного");
             }
             else {
-                ShowToastWithInfo("Рецепт успешно удален из избранного");
+                Utils.ShowNotificationToast(MealActivity.this, "Рецепт успешно удален из избранного");
             }
         }
         else {
             if (!favorites.TryAdd(_meal)) {
-                ShowToastWithError("Не удалось добавить в избранное");
+                Utils.ShowErrorToast(MealActivity.this, "Не удалось добавить в избранное");
             }
             else {
-                ShowToastWithInfo("Рецепт успешно добавлен в избранное");
+                Utils.ShowNotificationToast(MealActivity.this, "Рецепт успешно добавлен в избранное");
             }
         }
 
         UpdateFavoriteBtn();
-    }
-
-    private void ShowToastWithError(String error) {
-        Toast.makeText(MealActivity.this, "Ошибка: " + error, (int)5).show();
-    }
-
-    private void ShowToastWithInfo(String info) {
-        Toast.makeText(MealActivity.this, info, (int)5).show();
     }
 }
