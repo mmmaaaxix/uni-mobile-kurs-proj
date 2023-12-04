@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Kurs_Proj</string>
+    <string name="RndMealStr">Случайный рецепт</string>
+    <string name="FavaritesStr">Избранное</string>
+</resources>
