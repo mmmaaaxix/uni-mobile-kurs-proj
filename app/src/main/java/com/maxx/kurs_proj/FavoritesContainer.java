@@ -66,7 +66,6 @@ public class FavoritesContainer extends SQLiteOpenHelper {
         }
 
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues mealDbObj = MapMealToDbObj(meal);
         int res = db.delete(_tableName, "id = ?", new String[]{String.valueOf(meal.GetId())});
         db.close();
 

@@ -41,9 +41,8 @@ public class MealActivity extends AppCompatActivity {
     }
 
     public void onAddRemoveFavBtnClick(View view) {
-        FavoritesContainer favorites = _favoritesContainer;
-        if (favorites.AlreadyAdded(_meal)) {
-            if (!favorites.TryRemove(_meal)) {
+        if (_favoritesContainer.AlreadyAdded(_meal)) {
+            if (!_favoritesContainer.TryRemove(_meal)) {
                 Utils.ShowErrorToast(MealActivity.this, "Не удалось удалить из избранного");
             }
             else {
@@ -51,7 +50,7 @@ public class MealActivity extends AppCompatActivity {
             }
         }
         else {
-            if (!favorites.TryAdd(_meal)) {
+            if (!_favoritesContainer.TryAdd(_meal)) {
                 Utils.ShowErrorToast(MealActivity.this, "Не удалось добавить в избранное");
             }
             else {
